@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>꿈多이음 진로체험: 운동선수</title>
+    <!-- Tailwind CSS (스타일링) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons (아이콘) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div id="app" class="min-h-screen relative">
+        <!-- 콘텐츠가 이곳에 렌더링됩니다 -->
+    </div>
+
+    <!-- 숨겨진 캔버스 (수료증 생성용) -->
+    <canvas id="certCanvas" width="800" height="600" style="display:none;"></canvas>
+
+    <script>
+        // --- 1. 데이터 및 번역 자료 ---
+        const LANGUAGES = [
+            { code: 'KR', label: '한국어', flag: '🇰🇷' },
+            { code: 'US', label: 'English', flag: '🇺🇸' },
+            { code: 'JP', label: '日本語', flag: '🇯🇵' },
+            { code: 'CN', label: '中文', flag: '🇨🇳' },
+            { code: 'RU', label: 'Русский', flag: '🇷🇺' },
+            { code: 'VN', label: 'Tiếng Việt', flag: '🇻🇳' },
+        ];
+
+        const TRANSLATIONS = {
+            KR: {
+                title: "꿈多이음 진로체험: 운동선수",
+                placeholder_name: "이름을 입력하세요",
+                start_btn: "체험 시작하기",
+                next_btn: "다음 단계",
+                result_btn: "결과 보기",
+                home_btn: "메인 화면",
+                score: "점수",
+                download_cert: "수료증 다운로드",
+                job_info_title: "직업 탐구",
+                simulation_title: "선수 생활 체험",
+                final_result: "꿈多이음 체험 결과",
+                feedback_excellent: "와우! 당신은 전설적인 선수가 될 자질이 있습니다!",
+                feedback_good: "좋아요! 꾸준히 노력하면 훌륭한 선수가 될 수 있어요.",
+                feedback_effort: "조금 더 노력이 필요해요. 기초 체력부터 길러볼까요?",
+                cert_title: "꿈多이음 진로체험 수료증",
+                cert_desc: "위 학생은 [운동선수] 진로 체험 과정을 성실히 이수하였음을 증명합니다.",
+                multicultural_tip_title: "꿈多이음 Tip",
+                feedback_correct: "좋은 선택이에요!",
+                feedback_wrong: "아쉬운 선택이에요.",
+                btn_confirm: "확인 및 계속하기",
+                date_label: "이수일: "
+            },
+            US: {
+                title: "Dream Connect Career: Athlete",
+                placeholder_name: "Enter your name",
+                start_btn: "Start Experience",
+                next_btn: "Next Step",
+                result_btn: "View Result",
+                home_btn: "Main Menu",
+                score: "Score",
+                download_cert: "Download Certificate",
+                job_info_title: "Job Exploration",
+                simulation_title: "Simulation",
+                final_result: "Dream Connect Result",
+                feedback_excellent: "Wow! You have the potential to be a legend!",
+                feedback_good: "Good! With effort, you can be great.",
+                feedback_effort: "Keep trying. Let's start with basics!",
+                cert_title: "Certificate of Completion",
+                cert_desc: "This certifies that the student has completed the [Athlete] Career Experience.",
+                multicultural_tip_title: "Dream Connect Tip",
+                feedback_correct: "Great Choice!",
+                feedback_wrong: "Not the best choice.",
+                btn_confirm: "Confirm & Continue",
+                date_label: "Date: "
+            },
+            JP: {
+                title: "夢多イウム進路体験：スポーツ選手",
+                placeholder_name: "名前を入力してください",
+                start_btn: "体験を始める",
+                next_btn: "次へ",
+                result_btn: "結果を見る",
+                home_btn: "メイン画面",
+                score: "スコア",
+                download_cert: "修了証をダウンロード",
+                job_info_title: "職業探求",
+                simulation_title: "シミュレーション",
+                final_result: "夢多イウム体験結果",
+                feedback_excellent: "すごい！伝説になる素質があります！",
+                feedback_good: "いいですね！努力すれば素晴らしい選手になれます。",
+                feedback_effort: "もう少し頑張りましょう。基礎からスタート！",
+                cert_title: "進路体験修了証",
+                cert_desc: "上記の学生は[スポーツ選手]進路体験課程を誠実に履修しました。",
+                multicultural_tip_title: "夢多イウム Tip",
+                feedback_correct: "良い選択です！",
+                feedback_wrong: "惜しい選択です。",
+                btn_confirm: "確認して進む",
+                date_label: "日付: "
+            },
+            CN: {
+                title: "多梦连接职业体验：运动员",
+                placeholder_name: "请输入姓名",
+                start_btn: "开始体验",
+                next_btn: "下一步",
+                result_btn: "查看结果",
+                home_btn: "主屏幕",
+                score: "分数",
+                download_cert: "下载证书",
+                job_info_title: "职业探索",
+                simulation_title: "生活体验",
+                final_result: "多梦连接体验结果",
+                feedback_excellent: "哇！你有成为传奇的潜质！",
+                feedback_good: "很好！坚持努力就能成功。",
+                feedback_effort: "需要更多努力。从基础开始吧！",
+                cert_title: "职业体验结业证书",
+                cert_desc: "该学生认真完成了[运动员]职业体验课程。",
+                multicultural_tip_title: "多梦连接 Tip",
+                feedback_correct: "很好的选择！",
+                feedback_wrong: "遗憾的选择。",
+                btn_confirm: "确认并继续",
+                date_label: "日期: "
+            },
+            RU: {
+                title: "Карьера Dream Connect: Спортсмен",
+                placeholder_name: "Введите имя",
+                start_btn: "Начать",
+                next_btn: "Далее",
+                result_btn: "Результат",
+                home_btn: "Главная",
+                score: "Счет",
+                download_cert: "Скачать",
+                job_info_title: "Профессия",
+                simulation_title: "Симуляция",
+                final_result: "Результат Dream Connect",
+                feedback_excellent: "Вау! Потенциал легенды!",
+                feedback_good: "Хорошо! Усилия приведут к успеху.",
+                feedback_effort: "Нужно больше стараться.",
+                cert_title: "Сертификат",
+                cert_desc: "Студент прошел курс ознакомления с профессией [Спортсмен].",
+                multicultural_tip_title: "Совет Dream Connect",
+                feedback_correct: "Отличный выбор!",
+                feedback_wrong: "Не лучший выбор.",
+                btn_confirm: "Продолжить",
+                date_label: "Дата: "
+            },
+            VN: {
+                title: "Kết nối Ước mơ: Vận động viên",
+                placeholder_name: "Nhập tên",
+                start_btn: "Bắt đầu",
+                next_btn: "Tiếp theo",
+                result_btn: "Kết quả",
+                home_btn: "Trang chủ",
+                score: "Điểm",
+                download_cert: "Tải chứng nhận",
+                job_info_title: "Khám phá",
+                simulation_title: "Mô phỏng",
+                final_result: "Kết quả Kết nối Ước mơ",
+                feedback_excellent: "Wow! Bạn có tố chất huyền thoại!",
+                feedback_good: "Tốt! Nỗ lực sẽ thành công.",
+                feedback_effort: "Cần cố gắng hơn.",
+                cert_title: "Chứng nhận hoàn thành",
+                cert_desc: "Học sinh đã hoàn thành khóa trải nghiệm nghề [Vận động viên].",
+                multicultural_tip_title: "Mẹo Kết nối Ước mơ",
+                feedback_correct: "Lựa chọn tuyệt vời!",
+                feedback_wrong: "Lựa chọn chưa tốt.",
+                btn_confirm: "Xác nhận & Tiếp tục",
+                date_label: "Ngày: "
+            },
+        };
+
+        const EDUCATION_CONTENT = [
+            {
+                id: 1,
+                iconName: 'activity',
+                iconColor: 'text-blue-500',
+                title: { KR: "운동선수는 어떤 일을 하나요?", US: "What do athletes do?", JP: "スポーツ選手はどんな仕事をしますか？", CN: "运动员是做什么的？", RU: "Что делают спортсмены?", VN: "Vận động viên làm công việc gì?" },
+                desc: { KR: "축구, 야구, 테니스 등 각종 경기에서 선수로 활약합니다. 좋은 성적을 내기 위해 매일 체력 훈련과 기술 훈련을 합니다. 규칙을 지키며 정정당당하게 경쟁합니다.", US: "They compete in sports. They train daily to improve skills and fitness, competing fairly according to rules.", JP: "試合で活躍します。良い成績を出すために毎日訓練を行い、ルールを守って正々堂々と競争します。", CN: "在比赛中作为选手活跃。为了取得好成绩，每天进行训练，遵守规则公平竞争。", RU: "Участвуют в соревнованиях. Тренируются ежедневно и соревнуются честно по правилам.", VN: "Thi đấu thể thao. Họ tập luyện hàng ngày và thi đấu công bằng theo luật." }
+            },
+            {
+                id: 2,
+                iconName: 'target',
+                iconColor: 'text-red-500',
+                title: { KR: "어떤 능력이 필요한가요?", US: "What skills are needed?", JP: "どんな能力が必要ですか？", CN: "需要什么能力？", RU: "Какие навыки нужны?", VN: "Cần những kỹ năng gì?" },
+                desc: { KR: "강인한 체력과 운동 신경이 가장 중요합니다. 또한 끊임없는 훈련을 견디는 인내심과 팀원들과 협동하는 마음이 필요합니다.", US: "Physical strength and athletic ability are key. Patience and teamwork are also essential.", JP: "強靭な体力と運動神経が重要です。忍耐力とチームワークも必要です。", CN: "强健的体魄和运动神经最重要。还需要耐心和团队合作精神。", RU: "Важны физическая сила и атлетизм. Также необходимы терпение и командный дух.", VN: "Sức khỏe và năng khiếu là quan trọng nhất. Cần sự kiên nhẫn và tinh thần đồng đội." }
+            },
+            {
+                id: 3,
+                iconName: 'book-open',
+                iconColor: 'text-green-500',
+                title: { KR: "어떻게 준비하나요?", US: "How to prepare?", JP: "どうすればなれますか？", CN: "如何准备？", RU: "Как подготовиться?", VN: "Chuẩn bị như thế nào?" },
+                desc: { KR: "보통 초·중학교 때 운동부 활동을 시작합니다. 체육 고등학교나 대학의 체육학과에 진학하여 전문 교육을 받습니다.", US: "Usually start in school sports teams. Attend sports high schools or major in Physical Education.", JP: "通常、小中学校で運動部を始めます。体育高校や大学の体育学科に進学します。", CN: "通常在中小学开始运动部活动。进入体育高中或大学接受专业教育。", RU: "Начинают в школьных секциях. Поступают в спортивные вузы.", VN: "Bắt đầu từ đội thể thao trường. Học trường chuyên thể thao hoặc đại học TDTT." }
+            },
+            {
+                id: 4,
+                iconName: 'star',
+                iconColor: 'text-yellow-500',
+                title: { KR: "직업 전망은 어떤가요?", US: "Job Outlook", JP: "職業の展望", CN: "职业前景", RU: "Перспективы", VN: "Triển vọng nghề nghiệp" },
+                desc: { KR: "스포츠 인기는 계속될 것입니다. 프로 선수가 되지 않더라도 지도자, 심판 등 다양한 관련 직업을 가질 수 있습니다.", US: "Sports popularity will continue. Related jobs like coaches and referees are also available.", JP: "スポーツ人気は続くでしょう。指導者や審判など関連職にも就けます。", CN: "体育人气将持续。也可以从事教练、裁判等相关职业。", RU: "Популярность сохранится. Можно стать тренером или судьей.", VN: "Nghề này sẽ tiếp tục phổ biến. Có thể làm huấn luyện viên hoặc trọng tài." }
+            }
+        ];
+
+        const SIMULATION_STEPS = [
+            {
+                id: 1,
+                question: { KR: "아침 6시입니다. 훈련 시간이 다가옵니다.", US: "It's 6 AM. Training time approaches." },
+                options: [
+                    { text: { KR: "벌떡 일어나서 스트레칭을 한다.", US: "Wake up immediately and stretch." }, score: 10, feedback: { KR: "훌륭해요! 규칙적인 생활은 운동선수의 기본입니다.", US: "Great! Discipline is key for athletes." } },
+                    { text: { KR: "5분만 더 자다가 늦게 일어난다.", US: "Sleep 5 more minutes and wake up late." }, score: 5, feedback: { KR: "조금 아쉽네요. 지각은 훈련에 방해가 됩니다.", US: "Being late disrupts training." } },
+                    { text: { KR: "오늘은 피곤하니 훈련을 쉰다.", US: "Skip training because I'm tired." }, score: 0, feedback: { KR: "안돼요! 꾸준한 훈련 없이는 성장할 수 없습니다.", US: "Consistency is crucial for success." } }
+                ]
+            },
+            {
+                id: 2,
+                question: { KR: "점심시간입니다. 어떤 메뉴를 선택할까요?", US: "Lunch time. What menu to choose?" },
+                options: [
+                    { text: { KR: "단백질과 채소가 균형 잡힌 식단", US: "Balanced meal with protein and veggies." }, score: 10, feedback: { KR: "정답입니다! 영양 섭취는 몸 관리의 핵심입니다.", US: "Correct! Nutrition is vital for your body." } },
+                    { text: { KR: "맛있는 햄버거와 콜라", US: "Delicious hamburger and cola." }, score: 0, feedback: { KR: "건강에 좋지 않아요. 패스트푸드는 체력을 떨어뜨릴 수 있습니다.", US: "Fast food can lower your stamina." } },
+                    { text: { KR: "배가 안 고파서 굶는다", US: "Skip meal not hungry." }, score: 3, feedback: { KR: "끼니를 거르면 훈련할 에너지가 부족해집니다.", US: "Skipping meals leads to low energy." } }
+                ]
+            },
+            {
+                id: 3,
+                question: { KR: "팀 훈련 중 동료가 실수를 했습니다.", US: "Teammate made a mistake during training." },
+                options: [
+                    { text: { KR: "괜찮아! 다음엔 잘할 수 있어!", US: "It's okay! Next time will be better!" }, score: 10, feedback: { KR: "멋진 리더십입니다! 팀워크는 승리의 지름길입니다.", US: "Great leadership! Teamwork leads to victory." } },
+                    { text: { KR: "너 때문에 훈련이 끊겼잖아!", US: "You ruined the training flow!" }, score: 0, feedback: { KR: "비난은 팀 분위기를 망칩니다. 서로 격려해야 합니다.", US: "Blaming hurts team spirit." } },
+                    { text: { KR: "모른 척하고 내 훈련만 한다.", US: "Ignore and focus on myself." }, score: 5, feedback: { KR: "개인 훈련도 중요하지만, 동료를 챙기는 여유도 필요해요.", US: "Care for your teammates too." } }
+                ]
+            },
+            {
+                id: 4,
+                question: { KR: "발목이 조금 아픕니다. 어떻게 할까요?", US: "Ankle hurts a little. What to do?" },
+                options: [
+                    { text: { KR: "코치님께 말하고 상태를 점검한다.", US: "Tell the coach and check it." }, score: 10, feedback: { KR: "현명합니다! 부상을 미리 예방하는 것이 프로입니다.", US: "Wise! Preventing injury is professional." } },
+                    { text: { KR: "참고 훈련을 계속한다.", US: "Endure pain and continue." }, score: 3, feedback: { KR: "위험해요! 작은 통증이 큰 부상으로 이어질 수 있습니다.", US: "Pain can lead to serious injury." } },
+                    { text: { KR: "운동하기 싫어서 아픈 척 쉰다.", US: "Pretend it hurts more to skip." }, score: 0, feedback: { KR: "거짓말은 신뢰를 잃게 합니다. 솔직해야 해요.", US: "Lying breaks trust. Be honest." } }
+                ]
+            },
+            {
+                id: 5,
+                question: { KR: "경기에서 졌습니다. 기분이 매우 나쁩니다.", US: "Lost the game. Feeling bad." },
+                options: [
+                    { text: { KR: "패배 원인을 분석하고 다음을 준비한다.", US: "Analyze reasons and prepare for next." }, score: 10, feedback: { KR: "훌륭한 자세입니다! 실패는 성공의 어머니입니다.", US: "Great attitude! Failure teaches success." } },
+                    { text: { KR: "동료들 탓을 하며 화를 낸다.", US: "Blame teammates and get angry." }, score: 0, feedback: { KR: "남 탓을 하면 발전이 없습니다. 자신을 먼저 돌아보세요.", US: "Blaming stops improvement." } },
+                    { text: { KR: "슬퍼서 방에 틀어박힌다.", US: "Hide in room with sadness." }, score: 5, feedback: { KR: "슬퍼할 순 있지만, 빨리 털고 일어나는 회복력이 필요해요.", US: "Resilience is needed to bounce back." } }
+                ]
+            },
+            {
+                id: 6,
+                question: { KR: "외국인 코치님이 작전 설명을 합니다.", US: "Foreign coach explains strategy." },
+                tip: { KR: "💡 [소통 Tip] 언어가 서툴러도 괜찮아요. 스포츠 용어는 전 세계 공통인 경우가 많고, 바디랭귀지나 그림으로도 충분히 소통할 수 있답니다!", US: "💡 [Tip] Sports terms are often universal. Body language helps too!" },
+                options: [
+                    { text: { KR: "잘 안 들려도 눈치껏 이해하려 노력한다.", US: "Try to understand even if hard." }, score: 10, feedback: { KR: "적극적인 태도가 중요합니다! 듣다 보면 늘게 되어 있어요.", US: "Active attitude is important!" } },
+                    { text: { KR: "못 알아듣겠으니 딴짓을 한다.", US: "Can't understand, do something else." }, score: 0, feedback: { KR: "포기하지 마세요. 코치님은 여러분을 돕기 위해 있습니다.", US: "Don't give up. Listen carefully." } },
+                    { text: { KR: "통역사가 말해줄 때까지 기다린다.", US: "Wait for translator only." }, score: 5, feedback: { KR: "기다리는 것도 방법이지만, 직접 소통하려는 노력이 더 좋아요.", US: "Trying to communicate directly is better." } }
+                ]
+            },
+            {
+                id: 7,
+                question: { KR: "중요한 경기를 앞두고 긴장이 됩니다.", US: "Nervous before a big game." },
+                tip: { KR: "💡 [멘탈 Tip] 긴장은 누구나 해요. '나는 할 수 있다'고 주문을 외우거나 심호흡을 크게 해보세요. 긍정적인 생각은 몸을 가볍게 만듭니다.", US: "💡 [Tip] Deep breathing and positive thinking help reduce stress." },
+                options: [
+                    { text: { KR: "긍정적인 생각(이미지 트레이닝)을 한다.", US: "Do positive image training." }, score: 10, feedback: { KR: "좋습니다! 머릿속으로 성공하는 모습을 그리면 실제로도 도움이 됩니다.", US: "Visualizing success helps in reality." } },
+                    { text: { KR: "긴장을 풀기 위해 게임을 밤새 한다.", US: "Play games all night to relax." }, score: 0, feedback: { KR: "컨디션 조절 실패! 충분한 수면이 가장 중요합니다.", US: "Sleep is crucial for condition." } },
+                    { text: { KR: "그냥 아무 생각 없이 멍하니 있는다.", US: "Stay blank without thinking." }, score: 5, feedback: { KR: "나쁘진 않지만, 적극적으로 마인드 컨트롤을 해보는 건 어떨까요?", US: "Try active mind control." } }
+                ]
+            },
+            {
+                id: 8,
+                question: { KR: "상대 선수가 반칙을 했습니다.", US: "Opponent fouled you." },
+                options: [
+                    { text: { KR: "심판의 판정을 기다리고 냉정함을 유지한다.", US: "Wait for referee and stay calm." }, score: 10, feedback: { KR: "최고의 매너입니다! 흥분하지 않는 것이 승리의 열쇠입니다.", US: "Staying calm is key to victory." } },
+                    { text: { KR: "나도 똑같이 반칙으로 복수한다.", US: "Revenge with a foul too." }, score: 0, feedback: { KR: "절대 안 돼요! 보복 행위는 퇴장 당할 수 있습니다.", US: "Revenge can lead to ejection." } },
+                    { text: { KR: "심판에게 거칠게 항의한다.", US: "Argue roughly with referee." }, score: 3, feedback: { KR: "지나친 항의는 경고를 받을 수 있습니다. 판정을 존중하세요.", US: "Respect the referee's decision." } }
+                ]
+            },
+            {
+                id: 9,
+                question: { KR: "운동 장비가 더러워졌습니다.", US: "Equipment got dirty." },
+                options: [
+                    { text: { KR: "내 장비는 내가 직접 깨끗이 닦는다.", US: "Clean my equipment myself." }, score: 10, feedback: { KR: "훌륭해요! 장비를 소중히 다루는 것은 선수의 기본 자세입니다.", US: "Cherishing equipment is basic." } },
+                    { text: { KR: "부모님께 닦아달라고 한다.", US: "Ask parents to clean it." }, score: 5, feedback: { KR: "자신의 일은 스스로 하는 습관을 길러야 합니다.", US: "Do your own work." } },
+                    { text: { KR: "그냥 더러운 채로 쓴다.", US: "Use it dirty." }, score: 0, feedback: { KR: "장비 관리가 안 되면 경기력이 떨어지거나 부상을 당할 수 있어요.", US: "Dirty equipment can cause injury." } }
+                ]
+            },
+            {
+                id: 10,
+                question: { KR: "은퇴 후를 위해 무엇을 해야 할까요?", US: "Plan for after retirement?" },
+                tip: { KR: "💡 [미래 Tip] 운동선수 생명은 생각보다 짧을 수 있어요. 제2의 인생을 위해 공부, 외국어, 지도자 자격증 등 다양한 준비를 미리 해두는 것이 좋아요.", US: "💡 [Tip] Prepare for life after sports by studying or getting licenses." },
+                options: [
+                    { text: { KR: "운동 외에도 공부나 다른 기술을 익힌다.", US: "Study or learn other skills." }, score: 10, feedback: { KR: "아주 현명해요! 미래를 준비하는 자세가 멋집니다.", US: "Very wise! Preparing for the future." } },
+                    { text: { KR: "운동만 잘하면 되니 신경 쓰지 않는다.", US: "Only focus on sports." }, score: 0, feedback: { KR: "위험한 생각이에요. 은퇴 이후의 삶도 매우 깁니다.", US: "Life after retirement is long." } },
+                    { text: { KR: "나중에 생각하기로 하고 미룬다.", US: "Think about it later." }, score: 5, feedback: { KR: "지금부터 조금씩 생각해보는 것이 좋아요.", US: "Start thinking about it now." } }
+                ]
+            }
+        ];
+
+        // --- 2. 상태 관리 (State) ---
+        let state = {
+            step: 0, // 0:Main, 1-4:Info, 5-14:Sim, 15:Result
+            lang: 'KR',
+            name: '',
+            score: 0,
+            showFeedbackModal: false,
+            currentFeedback: null,
+            currentTip: null
+        };
+
+        const TOTAL_STEPS = 15;
+
+        // --- 3. 렌더링 함수 ---
+
+        // 유틸리티: 텍스트 가져오기
+        function t(key) {
+            return TRANSLATIONS[state.lang][key] || TRANSLATIONS['US'][key] || '';
+        }
+        function getLangText(obj) {
+            return obj[state.lang] || obj['US'] || '';
+        }
+
+        // 아이콘 리프레시 (DOM 업데이트 후 호출)
+        function refreshIcons() {
+            lucide.createIcons();
+        }
+
+        // 메인 렌더링 스위치
+        function renderApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = ''; // 초기화
+
+            if (state.step === 0) {
+                app.innerHTML = renderMainScreen();
+            } else if (state.step <= 4) {
+                app.innerHTML = renderHeader() + renderEducationScreen();
+            } else if (state.step > 4 && state.step <= 14) {
+                app.innerHTML = renderHeader() + renderSimulationScreen();
+                if (state.showFeedbackModal) {
+                    app.innerHTML += renderFeedbackModal();
+                }
+            } else {
+                app.innerHTML = renderHeader() + renderResultScreen();
+            }
+            refreshIcons();
+        }
+
+        function renderHeader() {
+            const progress = Math.min(100, Math.round((state.step / TOTAL_STEPS) * 100));
+            const currentFlag = LANGUAGES.find(l => l.code === state.lang).flag;
+            
+            return `
+            <div class="fixed top-0 left-0 right-0 bg-white shadow-md z-40">
+                <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-blue-600 text-lg">${state.name}</span>
+                        <span class="text-xs px-2 py-1 bg-gray-100 rounded-full">${currentFlag}</span>
+                    </div>
+                    <div class="flex-1 mx-4">
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500 transition-all duration-500 ease-out" style="width: ${progress}%"></div>
+                        </div>
+                        <p class="text-center text-xs text-gray-400 mt-1">${progress}%</p>
+                    </div>
+                    <button onclick="resetApp()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600">
+                        <i data-lucide="home" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderMainScreen() {
+            const langOptions = LANGUAGES.map(l => `<option value="${l.code}" ${state.lang === l.code ? 'selected' : ''}>${l.flag} ${l.label}</option>`).join('');
+            
+            return `
+            <div class="min-h-screen bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center p-4">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center relative overflow-hidden fade-in">
+                    <!-- 배경 장식 -->
+                    <div class="absolute top-0 left-0 w-32 h-32 bg-yellow-300 rounded-full filter blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
+                    <div class="absolute bottom-0 right-0 w-32 h-32 bg-blue-300 rounded-full filter blur-3xl opacity-30 translate-x-1/2 translate-y-1/2"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex justify-center mb-6">
+                            <div class="bg-blue-100 p-4 rounded-full">
+                                <i data-lucide="trophy" class="w-16 h-16 text-blue-600"></i>
+                            </div>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-2 whitespace-pre-line">${t('title')}</h1>
+                        <p class="text-gray-500 mb-8 text-sm">Global Career Experience Platform</p>
+                        
+                        <div class="space-y-4">
+                            <div class="relative group">
+                                <i data-lucide="users" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5"></i>
+                                <input type="text" id="nameInput" placeholder="${t('placeholder_name')}" 
+                                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-700"
+                                    value="${state.name}" oninput="updateName(this.value)">
+                            </div>
+
+                            <div class="relative group">
+                                <i data-lucide="globe" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5"></i>
+                                <select onchange="updateLang(this.value)" class="w-full pl-10 pr-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl appearance-none focus:outline-none focus:border-blue-500 text-gray-700 cursor-pointer">
+                                    ${langOptions}
+                                </select>
+                            </div>
+
+                            <button onclick="handleStart()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2 mt-4">
+                                ${t('start_btn')} <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderEducationScreen() {
+            const content = EDUCATION_CONTENT[state.step - 1];
+            return `
+            <div class="min-h-screen bg-gray-50 pt-24 pb-10 px-4 fade-in">
+                <div class="max-w-2xl mx-auto h-full">
+                    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-lg min-h-[500px] flex flex-col relative">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full font-bold text-sm">${t('job_info_title')}</div>
+                                <div class="text-gray-400 text-sm font-medium">${state.step} / 4</div>
+                            </div>
+                            
+                            <div class="flex justify-center mb-8">
+                                <div class="p-6 bg-blue-50 rounded-full shadow-sm ring-4 ring-blue-50">
+                                    <i data-lucide="${content.iconName}" class="w-16 h-16 ${content.iconColor}"></i>
+                                </div>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center break-keep">${getLangText(content.title)}</h2>
+                            <div class="bg-gray-50 p-6 rounded-2xl">
+                                <p class="text-lg text-gray-600 leading-relaxed text-center break-keep">${getLangText(content.desc)}</p>
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition-transform active:scale-95">
+                                ${t('next_btn')} <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderSimulationScreen() {
+            const scenario = SIMULATION_STEPS[state.step - 5];
+            let optionsHtml = scenario.options.map((opt, idx) => {
+                // escape function parameters
+                const safeText = getLangText(opt.text).replace(/'/g, "\\'");
+                const safeFeedbackText = getLangText(opt.feedback).replace(/'/g, "\\'");
+                const hasTip = scenario.tip ? true : false;
+                const safeTip = hasTip ? getLangText(scenario.tip).replace(/'/g, "\\'") : "";
+                
+                return `
+                <button onclick="handleOptionClick(${opt.score}, '${safeFeedbackText}', ${hasTip ? `'${safeTip}'` : 'null'})" 
+                    class="w-full text-left p-5 rounded-xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 group relative flex items-start gap-4 active:scale-[0.98]">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold group-hover:bg-blue-500 group-hover:text-white transition-colors mt-0.5">
+                        ${String.fromCharCode(65 + idx)}
+                    </div>
+                    <span class="text-gray-700 font-medium group-hover:text-blue-900 text-lg leading-snug">
+                        ${getLangText(opt.text)}
+                    </span>
+                </button>
+                `;
+            }).join('');
+
+            return `
+            <div class="min-h-screen bg-indigo-50 pt-24 pb-10 px-4 fade-in">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-xl border border-indigo-100">
+                        <div class="bg-gradient-to-r from-indigo-500 to-blue-600 p-8 text-center text-white relative">
+                            <span class="inline-block px-3 py-1 bg-white bg-opacity-20 rounded-full text-xs font-bold mb-2 tracking-wider">
+                                ${t('simulation_title')} ${state.step - 4} / 10
+                            </span>
+                            <h2 class="text-xl md:text-2xl font-bold leading-snug break-keep">
+                                ${getLangText(scenario.question)}
+                            </h2>
+                        </div>
+                        <div class="p-6 md:p-8 space-y-4">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderFeedbackModal() {
+            if (!state.currentFeedback) return '';
+            
+            let iconHtml = '';
+            let titleClass = '';
+            let titleText = '';
+
+            if (state.currentFeedback.type === 'correct') {
+                iconHtml = `<i data-lucide="check-circle" class="w-20 h-20 text-green-500 animate-bounce"></i>`;
+                titleClass = 'text-green-600';
+                titleText = t('feedback_correct');
+            } else if (state.currentFeedback.type === 'soso') {
+                iconHtml = `<i data-lucide="alert-circle" class="w-20 h-20 text-yellow-500"></i>`;
+                titleClass = 'text-yellow-600';
+                titleText = "So-So!";
+            } else {
+                iconHtml = `<i data-lucide="x-circle" class="w-20 h-20 text-red-500 animate-pulse"></i>`;
+                titleClass = 'text-red-600';
+                titleText = t('feedback_wrong');
+            }
+
+            let tipHtml = '';
+            if (state.currentTip) {
+                tipHtml = `
+                <div class="mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-left">
+                    <div class="flex items-center gap-2 mb-2 text-yellow-800 font-bold text-sm">
+                        <i data-lucide="brain" class="w-4 h-4"></i> ${t('multicultural_tip_title')}
+                    </div>
+                    <p class="text-sm text-gray-700 leading-relaxed">${state.currentTip}</p>
+                </div>
+                `;
+            }
+
+            return `
+            <div class="min-h-screen bg-black bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl fade-in">
+                    <div class="flex justify-center mb-4">${iconHtml}</div>
+                    <h3 class="text-2xl font-bold mb-2 ${titleClass}">${titleText}</h3>
+                    <div class="text-xl font-bold text-gray-800 mb-4">+${state.currentFeedback.score} ${t('score')}</div>
+                    <p class="text-gray-600 mb-6 bg-gray-50 p-4 rounded-xl break-keep">${state.currentFeedback.text}</p>
+                    ${tipHtml}
+                    <button onclick="nextStep()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg">
+                        ${t('btn_confirm')}
+                    </button>
+                </div>
+            </div>
+            `;
+        }
+
+        function renderResultScreen() {
+            let feedback = "";
+            if (state.score >= 90) feedback = t('feedback_excellent');
+            else if (state.score >= 60) feedback = t('feedback_good');
+            else feedback = t('feedback_effort');
+
+            const today = new Date().toLocaleDateString();
+
+            return `
+            <div class="min-h-screen bg-gray-50 pt-24 pb-10 px-4 fade-in">
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div class="bg-white rounded-3xl p-8 shadow-xl text-center border border-gray-100 relative overflow-hidden">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-center gap-2">
+                            <i data-lucide="medal" class="text-yellow-500"></i> ${t('final_result')}
+                        </h2>
+                        
+                        <p class="text-lg text-gray-600 mb-8 bg-blue-50 p-4 rounded-xl break-keep">"${feedback}"</p>
+
+                        <!-- 수료증 미리보기 카드 -->
+                        <div class="bg-white border-4 border-double border-blue-200 p-6 rounded-lg shadow-inner mb-8 text-left relative">
+                            <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="trophy" class="w-24 h-24"></i></div>
+                            <h3 class="text-center font-bold text-xl text-blue-800 mb-4 border-b pb-2">${t('cert_title')}</h3>
+                            <div class="space-y-2 text-gray-700 text-sm sm:text-base">
+                                <p><strong>Name:</strong> ${state.name}</p>
+                                <p><strong>Score:</strong> <span class="text-blue-600 font-bold">${state.score} / 100</span></p>
+                                <p class="leading-relaxed py-2">${t('cert_desc')}</p>
+                                <p class="text-right text-gray-500 text-xs mt-4">${t('date_label')} ${today}</p>
+                            </div>
+                            <div class="mt-4 flex justify-center">
+                                <div class="w-16 h-16 border-2 border-red-300 rounded-full flex items-center justify-center text-red-300 font-bold transform -rotate-12 opacity-50">PASS</div>
+                            </div>
+                        </div>
+
+                        <button onclick="downloadCertificate()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 mb-4">
+                            <i data-lucide="download" class="w-5 h-5"></i> ${t('download_cert')}
+                        </button>
+                        
+                        <button onclick="resetApp()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl">
+                            ${t('home_btn')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // --- 4. 액션 함수 ---
+        function updateName(val) {
+            state.name = val;
+            renderApp();
+            // 포커스 유지
+            setTimeout(()=> {
+                const input = document.getElementById('nameInput');
+                if(input) {
+                    input.focus();
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            }, 0);
+        }
+
+        function updateLang(val) {
+            state.lang = val;
+            renderApp();
+        }
+
+        function handleStart() {
+            if (state.name.trim() === '') {
+                alert(state.lang === 'KR' ? '이름을 입력해주세요.' : 'Please enter your name.');
+                return;
+            }
+            nextStep();
+        }
+
+        function nextStep() {
+            state.step++;
+            state.showFeedbackModal = false;
+            state.currentFeedback = null;
+            state.currentTip = null;
+            window.scrollTo(0, 0);
+            renderApp();
+        }
+
+        function resetApp() {
+            state.step = 0;
+            state.score = 0;
+            state.name = '';
+            renderApp();
+        }
+
+        function handleOptionClick(score, text, tip) {
+            state.score += score;
+            let type = 'wrong';
+            if (score === 10) type = 'correct';
+            else if (score > 0) type = 'soso';
+
+            state.currentFeedback = { score, text, type };
+            state.currentTip = tip; // 팁이 있으면 문자열, 없으면 null
+            state.showFeedbackModal = true;
+            renderApp();
+        }
+
+        function downloadCertificate() {
+            const canvas = document.getElementById('certCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // 캔버스 그리기
+            ctx.fillStyle = '#f8fafc'; 
+            ctx.fillRect(0, 0, 800, 600);
+            
+            // 테두리
+            ctx.strokeStyle = '#2563eb'; 
+            ctx.lineWidth = 15;
+            ctx.strokeRect(20, 20, 760, 560);
+            ctx.strokeStyle = '#fbbf24'; 
+            ctx.lineWidth = 5;
+            ctx.strokeRect(35, 35, 730, 530);
+
+            // 제목
+            ctx.fillStyle = '#1e3a8a';
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 40px "Malgun Gothic", sans-serif';
+            ctx.fillText('꿈多이음 진로체험 수료증', 400, 120);
+            
+            // 내용
+            ctx.fillStyle = '#334155';
+            ctx.font = '24px "Malgun Gothic", sans-serif';
+            ctx.fillText(`이름: ${state.name}`, 400, 220);
+            ctx.fillText(`체험 직업: 운동선수`, 400, 270);
+            ctx.fillText(`최종 점수: ${state.score} / 100`, 400, 320);
+            
+            ctx.font = '20px "Malgun Gothic", sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText("위 학생은 진로 체험 과정을 성실히 이수하였음을 증명합니다.", 400, 400);
+            
+            // 날짜
+            ctx.fillStyle = '#64748b';
+            ctx.font = '20px "Malgun Gothic", sans-serif';
+            const dateStr = new Date().toLocaleDateString();
+            ctx.fillText(dateStr, 400, 500);
+
+            // 다운로드
+            const link = document.createElement('a');
+            link.download = `꿈多이음_수료증_${state.name}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // 초기 실행
+        renderApp();
+
+    </script>
+</body>
+</html>
